@@ -13,16 +13,46 @@ data Exp = Val Double | Id String | UnApp UnOp Exp | BinApp BinOp Exp Exp
 
 type Env = [(String, Double)]
 
+listBinOp :: [(BinOp, Double -> Double -> Double)]
+listBinOp = [(Add,(+)),(Mul,(*)),(Div,(/))]
 
+
+listUnop = [(Neg, (*(-1))),(Sin, sin),(Cos, cos),(Log,log)]
 
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp = error "TODO implement lookUp"
+lookUp k env 
+  = head $ [value|(key,value)<-env,k==key]
 
 eval :: Exp -> Env -> Double
-eval = error "TODO: implement eval"
+eval (Val x) _           
+  = x
+eval (Id x) env           
+  = lookUp x env
+eval (UnApp uni x) env    
+  = (lookUp uni listUnop) $ eval x env
+eval (BinApp bin x y) env 
+  = (lookUp bin listBinOp) (eval x env) (eval y env)
 
 diff :: Exp -> String -> Exp
-diff = error "TODO: implement diff"
+diff (Val _) _ 
+  = Val 0
+diff (Id x) sym
+  | x == sym  = Val 1
+  | otherwise = Val 0
+diff (BinApp Add e1 e2) sym
+  = (BinApp Add (diff e1 sym) (diff e2 sym))
+diff (BinApp Mul e1 e2) sym
+  = (BinApp Add (BinApp Mul e1 (diff e2 sym)) (BinApp Mul (diff e1 sym) e2))
+diff (BinApp Div e1 e2) sym
+  = (BinApp Div (BinApp Add (BinApp Mul (diff e1 sym) (e2)) (BinApp Mul e1 (diff e2 sym))) (BinApp Mul e2 e2))
+diff (UnApp Sin u) sym 
+  = (BinApp Mul (UnApp Cos u) (diff u sym))
+diff (UnApp Cos u) sym
+  = (UnApp Neg (BinApp Mul (UnApp Sin u) (diff u sym)))
+diff (UnApp Log u) sym
+  = (BinApp Div (Val 1.0) (diff u sym))
+diff (UnApp Neg u) sym
+  = (UnApp Neg (diff u sym))
 
 maclaurin :: Exp -> Double -> Int -> Double
 maclaurin = error "TODO: implement maclaurin"
