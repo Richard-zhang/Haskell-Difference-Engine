@@ -20,21 +20,23 @@ listBinOp = [(Add,(+)),(Mul,(*)),(Div,(/))]
 listUnop = [(Neg, (*(-1))),(Sin, sin),(Cos, cos),(Log,log)]
 
 lookUp :: Eq a => a -> [(a, b)] -> b
-lookUp k env 
-  = head $ [value|(key,value)<-env,k==key]
+lookUp k env
+  = head $ [value | (key,value)<-env,k==key]
 
 eval :: Exp -> Env -> Double
-eval (Val x) _           
+eval (Val x) _
   = x
-eval (Id x) env           
+eval (Id x) env
   = lookUp x env
-eval (UnApp uni x) env    
+eval (UnApp uni x) env
   = (lookUp uni listUnop) $ eval x env
-eval (BinApp bin x y) env 
+eval (BinApp bin x y) env
   = (lookUp bin listBinOp) (eval x env) (eval y env)
 
+
+
 diff :: Exp -> String -> Exp
-diff (Val _) _ 
+diff (Val _) _
   = Val 0
 diff (Id x) sym
   | x == sym  = Val 1
@@ -45,20 +47,44 @@ diff (BinApp Mul e1 e2) sym
   = (BinApp Add (BinApp Mul e1 (diff e2 sym)) (BinApp Mul (diff e1 sym) e2))
 diff (BinApp Div e1 e2) sym
   = (BinApp Div (BinApp Add (BinApp Mul (diff e1 sym) (e2)) (BinApp Mul e1 (diff e2 sym))) (BinApp Mul e2 e2))
-diff (UnApp Sin u) sym 
+diff (UnApp Sin u) sym
   = (BinApp Mul (UnApp Cos u) (diff u sym))
 diff (UnApp Cos u) sym
   = (UnApp Neg (BinApp Mul (UnApp Sin u) (diff u sym)))
 diff (UnApp Log u) sym
-  = (BinApp Div (Val 1.0) (diff u sym))
+  = (BinApp Div (diff u sym) u)
 diff (UnApp Neg u) sym
   = (UnApp Neg (diff u sym))
 
 maclaurin :: Exp -> Double -> Int -> Double
-maclaurin = error "TODO: implement maclaurin"
+maclaurin func val order
+  = sum (zipWith3 f a b c)
+    where
+      a = [val^n | n <- [0..(order-1)]]
+      b = iterate (flip diff "x") func
+      c = map fromIntegral $ scanl (*) 1 [1..(order-1)]
+      f value exp factor
+        = eval (BinApp Div (BinApp Mul exp (Val value)) (Val factor)) [("x",0)]
+
+
+
+
+bOp = [(Add,"+"),(Mul,"*"),(Div,"/")]
+
+aOp = [(Neg, "-"),(Sin, "sin"),(Cos, "cos"),(Log,"log")]
+
 
 showExp :: Exp -> String
-showExp = error "TODO: implement showExp"
+showExp (Id x)
+  = x
+showExp (Val x)
+  = show x
+showExp (BinApp op e1 e2)
+  = ('(':showExp e1)++(lookUp op bOp)++(showExp e2)++")"
+showExp (UnApp op e1)
+  = (lookUp op aOp)++('(':(showExp e1)++")")
+
+
 
 ---------------------------------------------------------------------------
 -- Test cases from the spec.
@@ -85,9 +111,14 @@ e4 = UnApp Neg (UnApp Cos (Id "x"))
 e5 = UnApp Sin (BinApp Add (Val 1.0)
                            (UnApp Log (BinApp Mul (Val 2.0) (Id "x"))))
 
+
 -- > log(3*x^2+2)::Exp
-e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x")))
-                           (Val 2.0))
+--e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x"))))
+e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x"))) (Val 2.0))
+
+
+
+
 
 ----------------------------------------------------------------------
 -- EXTENSION: Uncomment and complete these...
