@@ -170,13 +170,19 @@ instance (Eq a, Num a ) => Num (Maybe a) where
     = Just (fromInteger x)
   Nothing + x
     = x
+  x + Nothing
+    = x
   Just x + Just y
     = Just (x+y)
   Just 1 * x
     = x
+  x * Just 1
+    = x
   Just x * Just y
     = Just (x * y)
   Nothing * x
+    = Nothing
+  x * Nothing
     = Nothing
   negate (Just x)
     = Just (negate x)
@@ -190,6 +196,8 @@ instance (Eq a, Fractional a) => Fractional (Maybe a) where
     = Just (fromRational x)
   Nothing / x
     = Nothing
+  x / Nothing
+    = error "can't divide 0"
   Just x / Just y = Just (x/y)
 
 
@@ -200,11 +208,34 @@ diff2 (Val _) _
   = Nothing
 diff2 (Id x) sym
   | x == sym = Just 1
-  | otherwise = Val 0
+  | otherwise = Nothing
 diff2 (BinApp Add e1 e2) sym
-  = (diff e1 sym) + (diff e2 sym)
+  = (diff2 e1 sym) + (diff2 e2 sym)
 diff2 (BinApp Mul e1 e2) sym
-  = (BinApp )
+  = (Just e1)*(diff2 e2 sym)+(diff2 e1 sym)*(Just e2)
+diff2 (BinApp Div e1 e2) sym
+  = ((diff2 e1 sym)*(Just e2)+(-((Just e1)*(diff2 e2 sym))))/(Just e2 * Just e2)
+diff2 (UnApp Sin u) sym
+  = (Just (cos u))*(diff2 u sym)
+diff2 (UnApp Cos u) sym
+  = -((Just (sin u))*(diff2 u sym))
+diff2 (UnApp Log u) sym
+  = (diff2 u sym)/(Just u)
+diff2 (UnApp Neg u) sym
+  = -(diff2 u sym)
+
+fastdiff :: Exp -> String -> Exp
+      
+
+fastmaclaurin :: Exp -> Double -> Int -> Double
+fastmaclaurin func val order
+  = sum (zipWith3 f a b c)
+    where
+      a = [val^n | n <- [0..(order-1)]]
+      b = iterate (flip diff "x") func
+      c = map fromIntegral $ scanl (*) 1 [1..(order-1)]
+      f value exp factor
+        = eval (BinApp Div (BinApp Mul exp (Val value)) (Val factor)) [("x",0)]
 -- The following makes it much easier to input expressions, e.g. sin x, log(x*x) etc.
 {-
 x, y :: Exp
