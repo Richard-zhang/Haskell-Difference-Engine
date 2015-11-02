@@ -46,7 +46,7 @@ diff (BinApp Add e1 e2) sym
 diff (BinApp Mul e1 e2) sym
   = (BinApp Add (BinApp Mul e1 (diff e2 sym)) (BinApp Mul (diff e1 sym) e2))
 diff (BinApp Div e1 e2) sym
-  = (BinApp Div (BinApp Add (BinApp Mul (diff e1 sym) (e2)) (BinApp Mul e1 (diff e2 sym))) (BinApp Mul e2 e2))
+  = (BinApp Div (BinApp Add (BinApp Mul (diff e1 sym) (e2)) (UnApp Neg (BinApp Mul e1 (diff e2 sym)))) (BinApp Mul e2 e2))
 diff (UnApp Sin u) sym
   = (BinApp Mul (UnApp Cos u) (diff u sym))
 diff (UnApp Cos u) sym
@@ -83,6 +83,9 @@ showExp (BinApp op e1 e2)
   = ('(':showExp e1)++(lookUp op bOp)++(showExp e2)++")"
 showExp (UnApp op e1)
   = (lookUp op aOp)++('(':(showExp e1)++")")
+
+
+
 
 
 
@@ -123,23 +126,88 @@ e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x")))
 ----------------------------------------------------------------------
 -- EXTENSION: Uncomment and complete these...
 
--- instance Num Exp where
-
--- instance Fractional Exp where
-
--- instance Floating Exp where
-
-
--- instance (Eq a, Num a) => Num (Maybe a) where
-
--- instance (Eq a, Fractional a) => Fractional (Maybe a) where
-
--- diff2 :: Exp -> String -> Maybe Exp
+instance Num Exp where
+  e1 * e2
+    = BinApp Mul e1 e2
+  e1 + e2
+    = BinApp Add e1 e2
+  fromInteger x
+    = Val (fromIntegral x)
+  negate e1
+    = (UnApp Neg e1)
 
 
+instance Fractional Exp where
+  e1 / e2
+    = BinApp Div e1 e2
+  fromRational x
+    = Val (fromRational x)
 
+
+instance Floating Exp where
+  cos e1
+    = (UnApp Cos e1)
+  sin e1
+    = (UnApp Sin e1)
+  log e1
+    = (UnApp Log e1)
+
+
+class Vars a where
+  x,y :: a
+
+instance Vars Exp where
+  x = Id "x"
+  y = Id "y"
+
+
+
+
+instance (Eq a, Num a ) => Num (Maybe a) where
+  fromInteger 0
+    = Nothing
+  fromInteger x
+    = Just (fromInteger x)
+  Nothing + x
+    = x
+  Just x + Just y
+    = Just (x+y)
+  Just 1 * x
+    = x
+  Just x * Just y
+    = Just (x * y)
+  Nothing * x
+    = Nothing
+  negate (Just x)
+    = Just (negate x)
+  negate Nothing
+    = Nothing
+
+instance (Eq a, Fractional a) => Fractional (Maybe a) where
+  fromRational 0.0
+    = Nothing
+  fromRational x
+    = Just (fromRational x)
+  Nothing / x
+    = Nothing
+  Just x / Just y = Just (x/y)
+
+
+
+
+diff2 :: Exp -> String -> Maybe Exp
+diff2 (Val _) _
+  = Nothing
+diff2 (Id x) sym
+  | x == sym = Just 1
+  | otherwise = Val 0
+diff2 (BinApp Add e1 e2) sym
+  = (diff e1 sym) + (diff e2 sym)
+diff2 (BinApp Mul e1 e2) sym
+  = (BinApp )
 -- The following makes it much easier to input expressions, e.g. sin x, log(x*x) etc.
-
+{-
 x, y :: Exp
 x = Id "x"
 y = Id "y"
+-}
