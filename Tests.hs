@@ -49,6 +49,8 @@ evalTests
 
     , ( e6, [("x",0.37)])
         ==> 0.8799171617597958
+    , (sin(x)/(1+log(x))), [("x", 0.37)])
+        ==> 62.914514485322805
     ]
 
 diffTests
@@ -90,6 +92,8 @@ diffTests
                     (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x")
                                                                   (Id "x")))
                                 (Val 2.0))
+    , ((log(x)/(1+2*x)),"x") ==>
+      BinApp Div (BinApp Add (BinApp Mul (BinApp Div (Val 1.0) (Id "x")) (BinApp Add (Val 1.0) (BinApp Mul (Val 2.0) (Id "x")))) (UnApp Neg (BinApp Mul (UnApp Log (Id "x")) (BinApp Add (Val 0.0) (BinApp Add (BinApp Mul (Val 2.0) (Val 1.0)) (BinApp Mul (Val 0.0) (Id "x"))))))) (BinApp Mul (BinApp Add (Val 1.0) (BinApp Mul (Val 2.0) (Id "x"))) (BinApp Add (Val 1.0) (BinApp Mul (Val 2.0) (Id "x"))))
     ]
 
 maclaurinTests
@@ -99,7 +103,14 @@ maclaurinTests
     , (UnApp Sin (Id "x"), 2, 7) ==> 0.9333333333333333
     , (UnApp Sin (Id "x"), 2, 9) ==> 0.9079365079365079
     , (UnApp Cos (Id "x"), 4, 9)  ==> (-0.39682539682539764)
+
     ]
+
+
+
+fastmaclaurinTests
+  = [(sin(x), 2, 15) ==> 0.9092974515196738,
+     (sin(x), 2, 9) ==> 0.9079365079365079]
 
 showExpTests
   = [ Val 42 ==> "42.0"
@@ -118,6 +129,7 @@ allTestCases
     , testCase "diff"       (uncurry diff)       diffTests
     , floatTestCase "maclaurin"  (uncurry3 maclaurin) maclaurinTests
     , testCase "showExp"    (showExp . unId)     (map mkId showExpTests)
+    , floatTestCase "fastmaclaurin" (uncurry3 fastmaclaurin) fastmaclaurinTests
     ]
 
 runTests = mapM_ goTest allTestCases
