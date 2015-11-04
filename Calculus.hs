@@ -113,7 +113,8 @@ e5 = UnApp Sin (BinApp Add (Val 1.0)
 
 -- > log(3*x^2+2)::Exp
 --e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x"))))
-e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x") (Id "x"))) (Val 2.0))
+e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x")
+  (Id "x"))) (Val 2.0))
 
 
 
@@ -159,43 +160,26 @@ instance Vars Exp where
 
 
 instance (Eq a, Num a ) => Num (Maybe a) where
-  fromInteger 0
-    = Nothing
-  fromInteger x
-    = Just (fromInteger x)
-  Nothing + x
-    = x
-  x + Nothing
-    = x
-  Just x + Just y
-    = Just (x+y)
-  Just 1 * x
-    = x
-  x * Just 1
-    = x
-  Just x * Just y
-    = Just (x * y)
-  Nothing * x
-    = Nothing
-  x * Nothing
-    = Nothing
-  negate (Just x)
-    = Just (negate x)
-  negate Nothing
-    = Nothing
+  fromInteger 0 = Nothing
+  fromInteger x = Just (fromInteger x)
+  Nothing + x = x
+  x + Nothing = x
+  Just x + Just y = Just (x+y)
+  Just 1 * x = x
+  x * Just 1 = x
+  Just x * Just y = Just (x * y)
+  Nothing * x = Nothing
+  x * Nothing = Nothing
+  negate (Just x) = Just (negate x)
+  negate Nothing = Nothing
 
 instance (Eq a, Fractional a) => Fractional (Maybe a) where
-  fromRational 0.0
-    = Nothing
-  fromRational x
-    = Just (fromRational x)
-  Nothing / x
-    = Nothing
-  x / (Just 1)
-    = x
-  x / Nothing
-    = error "can't divide 0"
-  Just x / Just y = Just (x/y)
+  fromRational 0.0 = Nothing
+  fromRational x   = Just (fromRational x)
+  Nothing / x      = Nothing
+  x / (Just 1)     = x
+  x / Nothing      = error "can't divide 0"
+  Just x / Just y  = Just (x/y)
 
 diff2 :: Exp -> String -> Maybe Exp
 diff2 (Val _) _
@@ -206,7 +190,8 @@ diff2 (Id x) sym
 diff2 (BinApp op e1 e2) sym
   | op == Add = (diff2 e1 sym) + (diff2 e2 sym)
   | op == Mul = (Just e1)*(diff2 e2 sym)+(diff2 e1 sym)*(Just e2)
-  | op == Div = ((diff2 e1 sym)*(Just e2)+(-((Just e1)*(diff2 e2 sym))))/(Just e2 * Just e2)
+  | op == Div = ((diff2 e1 sym)*(Just e2)+(-((Just e1)*(diff2 e2 sym))))/
+  (Just e2 * Just e2)
 diff2 (UnApp op u) sym
   | op == Sin = (Just (cos u))*(diff2 u sym)
   | op == Cos = -((Just (sin u))*(diff2 u sym))
