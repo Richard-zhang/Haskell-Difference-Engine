@@ -81,13 +81,6 @@ showExp (UnApp op e1)
   = (lookUp op aOp)++('(':(showExp e1)++")")
 
 
-
-
-
-
----------------------------------------------------------------------------
--- Test cases from the spec.
-
 e1, e2, e3, e4, e5, e6 :: Exp
 
 -- > 5*x
@@ -120,8 +113,7 @@ e6 = UnApp Log (BinApp Add (BinApp Mul (Val 3.0) (BinApp Mul (Id "x")
 
 
 
-----------------------------------------------------------------------
--- EXTENSION: Uncomment and complete these...
+
 
 instance Num Exp where
   e1 * e2

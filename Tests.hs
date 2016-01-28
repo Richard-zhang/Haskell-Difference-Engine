@@ -1,7 +1,7 @@
 module Tests where
 
-import IC.TestSuite hiding (Id)
-import qualified IC.TestSuite as TS
+import Test.TestSuite hiding (Id)
+import qualified Test.TestSuite as TS
 import Calculus
 
 evalTests

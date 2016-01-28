@@ -1,5 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
-module IC.TestSuite where
+module Test.TestSuite where
 
 import Control.Exception
 import Control.Monad
